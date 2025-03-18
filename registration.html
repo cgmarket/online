@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Register</title>
+  <script type="module" src="firebase.js"></script>
+</head>
+<body>
+  <h2>Registration</h2>
+  <input type="email" id="email" placeholder="Email"><br>
+  <input type="password" id="password" placeholder="Password"><br>
+  <button onclick="register()">Register</button>
+  <p>Already have an account? <a href="index.html">Login</a></p>
+
+  <script type="module">
+    document.querySelector("button").addEventListener("click", async () => {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+
+      try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+        // Save subscription field
+        await setDoc(doc(db, "users", user.uid), {
+          email: email,
+          subscription: "free"
+        });
+        alert('Registration Successful! Now Login.');
+        window.location.href = "index.html";
+      } catch (error) {
+        alert(error.message);
+      }
+    });
+  </script>
+</body>
+</html>

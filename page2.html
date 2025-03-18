@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Gold Price</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            text-align: center; 
+            margin-top: 30px; 
+            background-color: #f8f9fa;
+        }
+        h1 {
+            color: #333;
+        }
+        .table-container {
+            width: 90%;
+            max-width: 600px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+        th {
+            background-color: #ffcc00;
+            color: #333;
+            font-size: 18px;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        .highlight {
+            font-weight: bold; 
+            color: #d4af37;
+        }
+        .positive { color: green; }
+        .negative { color: red; }
+        #timestamp {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <h1>Live Gold Price (USD)</h1>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>GOLD</th>
+                    <th>Price (USD)</th>
+                    <th>Change</th>
+                </tr>
+            </thead>
+            <tbody id="goldTable">
+                <tr><td colspan="3">Loading...</td></tr>
+            </tbody>
+        </table>
+        <p id="timestamp"></p>
+    </div>
+
+    <h1>Live Gold Price (BDT)</h1>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Gold</th>
+                    <th>Price (BDT)</th>
+                    <th>Change</th>
+                </tr>
+            </thead>
+            <tbody id="goldTableBDT">
+                <tr><td colspan="3">Loading...</td></tr>
+            </tbody>
+        </table>
+        <p id="timestampBDT"></p>
+    </div>
+
+    <script>
+        async function fetchGoldPrice() {
+            const apiKey = "goldapi-4nn3sm8bwd329-io";
+            const url = "https://www.goldapi.io/api/XAU/USD";
+            const exchangeRateUrl = "https://api.exchangerate-api.com/v4/latest/USD";
+
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        "x-access-token": apiKey,
+                        "Content-Type": "application/json"
+                    }
+                });
+                const data = await response.json();
+                
+                const exchangeResponse = await fetch(exchangeRateUrl);
+                const exchangeData = await exchangeResponse.json();
+                const usdToBdt = exchangeData.rates.BDT;
+                
+                function formatChange(change) {
+                    const sign = change > 0 ? "+" : "";
+                    return `<span class="${change > 0 ? 'positive' : 'negative'}">${sign}${change.toFixed(2)}</span>`;
+                }
+                
+                const goldTable = document.getElementById("goldTable");
+                goldTable.innerHTML = `
+                    <tr>
+                        <td>Gold Price per Ounce</td>
+                        <td class="highlight">$${data.price.toFixed(2)}</td>
+                        <td>${formatChange(data.ch)}</td>
+                    </tr>
+                    <tr>
+                        <td>Gold Price per Gram</td>
+                        <td>$${data.price_gram_24k.toFixed(2)}</td>
+                        <td>${formatChange(data.ch)}</td>
+                    </tr>
+                    <tr>
+                        <td>Gold Price per Vori</td>
+                        <td>$${(data.price_gram_24k * 11.66).toFixed(2)}</td>
+                        <td>${formatChange(data.ch)}</td>
+                    </tr>
+                    <tr>
+                        <td>Gold Price per Kilo</td>
+                        <td>$${(data.price * 32.1507).toFixed(2)}</td>
+                        <td>${formatChange(data.ch)}</td>
+                    </tr>
+                `;
+
+                const goldTableBDT = document.getElementById("goldTableBDT");
+                goldTableBDT.innerHTML = `
+                    <tr>
+                        <td>Gold Price per Ounce</td>
+                        <td class="highlight">৳${(data.price * usdToBdt).toFixed(2)}</td>
+                        <td>${formatChange(data.ch * usdToBdt)}</td>
+                    </tr>
+                    <tr>
+                        <td>Gold Price per Gram</td>
+                        <td>৳${(data.price_gram_24k * usdToBdt).toFixed(2)}</td>
+                        <td>${formatChange(data.ch * usdToBdt)}</td>
+                    </tr>
+                    <tr>
+                        <td>Gold Price per Vori</td>
+                        <td>৳${(data.price_gram_24k * 11.66 * usdToBdt).toFixed(2)}</td>
+                        <td>${formatChange(data.ch * usdToBdt)}</td>
+                    </tr>
+                    <tr>
+                        <td>Gold Price per Kilo</td>
+                        <td>৳${(data.price * 32.1507 * usdToBdt).toFixed(2)}</td>
+                        <td>${formatChange(data.ch * usdToBdt)}</td>
+                    </tr>
+                `;
+
+                document.getElementById("timestamp").innerText = `Last Updated: ${new Date(data.timestamp * 1000).toLocaleString()}`;
+                document.getElementById("timestampBDT").innerText = `Last Updated: ${new Date(data.timestamp * 1000).toLocaleString()}`;
+            } catch (error) {
+                document.getElementById("goldTable").innerHTML = "<tr><td colspan='3'>Failed to load data</td></tr>";
+                document.getElementById("goldTableBDT").innerHTML = "<tr><td colspan='3'>Failed to load data</td></tr>";
+                console.error("Error fetching gold price:", error);
+            }
+        }
+
+        fetchGoldPrice();
+        setInterval(fetchGoldPrice, 7200000); // Update every 2 hours
+    </script>
+</body>
+</html>

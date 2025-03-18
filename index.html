@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Login</title>
+  <script type="module" src="firebase.js"></script>
+</head>
+<body>
+  <h2>Login</h2>
+  <input type="email" id="email" placeholder="Email"><br>
+  <input type="password" id="password" placeholder="Password"><br>
+  <button id="login">Login</button>
+  <p>Don't have an account? <a href="registration.html">Register</a></p>
+
+  <script type="module">
+    document.getElementById("login").addEventListener("click", async () => {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+
+      try {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+        const docRef = doc(db, "users", user.uid);
+        const docSnap = await getDoc(docRef);
+        
+        if (docSnap.exists() && docSnap.data().subscription === "paid") {
+          window.location.href = "home.html";
+        } else {
+          alert("Your subscription is not active! Please pay via bKash 01404819138 and send your email to WhatsApp.");
+        }
+      } catch (error) {
+        alert(error.message);
+      }
+    });
+  </script>
+</body>
+</html>
